@@ -37,7 +37,7 @@ export const venueSlice = createSlice({
   
   ],
   reducers: {
-   
+   // the state passed in below functions is the current state and maybe this current state is the above given initial state
     incrementQuantity: (state, action) => {
       const { payload: index } = action;
       if (state[index]) {
@@ -59,4 +59,4 @@ export const { incrementQuantity, decrementQuantity } = venueSlice.actions;
 // the above line will be imported in conference event.jsx to keep reference to the reducer functions managing the states
 
 export default venueSlice.reducer;
-// the above line will be imported in store to keep referenct to the states
+// the above line will be imported in store to keep referenct to the states 

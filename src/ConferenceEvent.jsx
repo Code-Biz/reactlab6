@@ -6,6 +6,7 @@ import { incrementQuantity, decrementQuantity } from "./venueSlice";
 //the above line imports (export const { incrementQuantity, decrementQuantity } = venueSlice.actions;
 //which was exported by the sice
 import { incrementAvQuantity,decrementAvQuantity } from "./avSlice";
+import { toggleMealSelection } from "./mealsSlice";
 
 const ConferenceEvent = () => {
   const [showItems, setShowItems] = useState(false);
@@ -13,6 +14,7 @@ const ConferenceEvent = () => {
   const venueItems = useSelector((state) => state.venue);
 // THE ABOVE LINE GETS THE VENUE ITEMS/OBJECTS OF INITITALSTATE ARAY DECLARED IN THE VENUESLICE.JS
 const avItems = useSelector((state)=>state.av);
+const mealsItems= useSelector((state)=>{state.meals})
   const dispatch = useDispatch();
   const remainingAuditoriumQuantity = 3 - venueItems.find(item => item.name === "Auditorium Hall (Capacity:200)").quantity;
 
@@ -35,12 +37,25 @@ const avItems = useSelector((state)=>state.av);
     }
   };
   const handleIncrementAvQuantity = (index) => {
+    dispatch(incrementAvQuantity(index));
   };
 
   const handleDecrementAvQuantity = (index) => {
+    dispatch(decrementAvQuantity(index));
   };
 
   const handleMealSelection = (index) => {
+
+    const item = mealsItems[index];
+
+    if(item.selected && item.type==="mealForpeople"){
+
+      const totalPeople=item.selected? numberOfPeople:'0';
+      dispatch(toggleMealSelection(index,totalPeople))
+    }
+    else{
+      dispatch(toggleMealSelection(index));
+    }
 
   };
 
@@ -60,10 +75,20 @@ const avItems = useSelector((state)=>state.av);
         totalCost += item.cost * item.quantity;
       });
     }
+    else if(section==="av"){
+      avItems.forEach((item)=>{totalCost+=item.cost*item.quantity});
+    }
+
+    else if(section==="meal"){
+      mealsItems.forEach((item)=>{totalCost+=item.cost*numberOfPeople});
+    }
     return totalCost;
   };
   const venueTotalCost = calculateTotalCost("venue");
-//THE SECTION VALUE VENUE IS USED TO REFER TO name: "venue", WE DECLARED IN THE CREATESLICE IN VENUESLICE.JS FILE
+  //THE SECTION VALUE VENUE IS USED TO REFER TO name: "venue", WE DECLARED IN THE CREATESLICE IN VENUESLICE.JS FILE
+  const avTotalCost = calculateTotalCost("av");
+  const mealTotalCost = calculateTotalCost("meal");
+
   const navigateToProducts = (idType) => {
     if (idType == '#venue' || idType == '#addons' || idType == '#meals') {
       if (showItems) { // Check if showItems is false
@@ -179,14 +204,10 @@ const avItems = useSelector((state)=>state.av);
                     <span className="quantity-value">{item.quantity}</span>
                     <button className="btn-warning" onClick={()=>handleIncrementAvQuantity(index)}> &#43; </button>
                   </div>
-                  <div>
-
-                  </div>
-
                   </div>
                 ))}
                 </div>
-                <div className="total_cost">Total Cost:</div>
+                <div className="total_cost">Total Cost: ${avTotalCost}</div>
 
               </div>
 
@@ -200,13 +221,24 @@ const avItems = useSelector((state)=>state.av);
                 </div>
 
                 <div className="input-container venue_selection">
+                  <label htmlFor="numberOfPeople"><h3>Number of People: </h3></label>
+                  <input type="number" value={numberOfPeople} min="1" className="input_box5" id="numberOfPeople" onChange={(e)=>{setNumberOfPeople(parseInt(e.target.value))}}/>
 
                 </div>
                 <div className="meal_selection">
+                  {mealsItems.map((item,index)=>(
+        <div className="meal_item" key={index} style={{ padding: 15 }}>
+          <div className="inner">
+            <input type="checkbox" id={`meal_${index}`} checked={item.selected} onChange={()=>handleMealSelection(index)}/></div>
+          <label  htmlFor={`meal_${index}`}>{item.name}</label>
+      {/* upar wali line htmlFor ki value string hai. So string value generate krnay k liay hum ne backtiks ka use kia or ham unk backtiks ya kehlo string main hum ne aik js expresion include krni thi us k liay hum ne $ ka istemal ki us expression k sath. Agar ye string value na hoti to humain $ use na krna part  or esay hi hum {} use krletay directly  */}
+          
+      <div className="meal_cost">${item.cost}</div>
 
+          </div>
+                  ))}
                 </div>
-                <div className="total_cost">Total Cost: </div>
-
+                <div className="total_cost">Total Cost: ${mealTotalCost}</div>
 
               </div>
             </div>
