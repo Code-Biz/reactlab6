@@ -56,5 +56,7 @@ export const venueSlice = createSlice({
 });
 
 export const { incrementQuantity, decrementQuantity } = venueSlice.actions;
+// the above line will be imported in conference event.jsx to keep reference to the reducer functions managing the states
 
 export default venueSlice.reducer;
+// the above line will be imported in store to keep referenct to the states
