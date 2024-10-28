@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { incrementQuantity, decrementQuantity } from "./venueSlice";
 //the above line imports (export const { incrementQuantity, decrementQuantity } = venueSlice.actions;
 //which was exported by the sice
+import { incrementAvQuantity,decrementAvQuantity } from "./avSlice";
 
 const ConferenceEvent = () => {
   const [showItems, setShowItems] = useState(false);
