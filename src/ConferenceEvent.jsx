@@ -6,7 +6,6 @@ import { incrementQuantity, decrementQuantity } from "./venueSlice";
 //the above line imports (export const { incrementQuantity, decrementQuantity } = venueSlice.actions;
 //which was exported by the sice
 import { incrementAvQuantity,decrementAvQuantity } from "./avSlice";
-import { toggleMealSelection } from "./mealsSlice";
 
 const ConferenceEvent = () => {
   const [showItems, setShowItems] = useState(false);
@@ -46,17 +45,6 @@ const mealsItems= useSelector((state)=>{state.meals})
 
   const handleMealSelection = (index) => {
 
-    const item = mealsItems[index];
-
-    if(item.selected && item.type==="mealForpeople"){
-
-      const totalPeople=item.selected? numberOfPeople:'0';
-      dispatch(toggleMealSelection(index,totalPeople))
-    }
-    else{
-      dispatch(toggleMealSelection(index));
-    }
-
   };
 
   const getItemsFromTotalCost = () => {
@@ -80,7 +68,7 @@ const mealsItems= useSelector((state)=>{state.meals})
     }
 
     else if(section==="meal"){
-      mealsItems.forEach((item)=>{totalCost+=item.cost*numberOfPeople});
+      mealsItems.forEach((item)=>{totalCost+=item.cost*item.quantity})
     }
     return totalCost;
   };
