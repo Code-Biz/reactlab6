@@ -4,11 +4,13 @@ import venueReducer from './venueSlice';
 //the above line imports (export default venueSlice.reducer;
 //which was exported by the sice
 import avReducer from './avSlice';
+import mealsReducer from './mealsSlice'
 
 export default configureStore({
   reducer: {
     venue: venueReducer,
     av: avReducer,
+    meals: mealsReducer,
   },
 });
 

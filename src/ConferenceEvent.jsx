@@ -5,15 +5,16 @@ import { useSelector, useDispatch } from "react-redux";
 import { incrementQuantity, decrementQuantity } from "./venueSlice";
 //the above line imports (export const { incrementQuantity, decrementQuantity } = venueSlice.actions;
 //which was exported by the sice
-import { incrementAvQuantity,decrementAvQuantity } from "./avSlice";
+import { incrementAvQuantity, decrementAvQuantity } from "./avSlice";
+import { toggleMealSelection } from "./mealsSlice";
 
 const ConferenceEvent = () => {
   const [showItems, setShowItems] = useState(false);
   const [numberOfPeople, setNumberOfPeople] = useState(1);
   const venueItems = useSelector((state) => state.venue);
-// THE ABOVE LINE GETS THE VENUE ITEMS/OBJECTS OF INITITALSTATE ARAY DECLARED IN THE VENUESLICE.JS
-const avItems = useSelector((state)=>state.av);
-const mealsItems= useSelector((state)=>{state.meals})
+  // THE ABOVE LINE GETS THE VENUE ITEMS/OBJECTS OF INITITALSTATE ARAY DECLARED IN THE VENUESLICE.JS
+  const avItems = useSelector((state) => state.av);
+  const mealsItems = useSelector((state) => state.meals)
   const dispatch = useDispatch();
   const remainingAuditoriumQuantity = 3 - venueItems.find(item => item.name === "Auditorium Hall (Capacity:200)").quantity;
 
@@ -44,16 +45,74 @@ const mealsItems= useSelector((state)=>{state.meals})
   };
 
   const handleMealSelection = (index) => {
+    const item = mealsItems[index];
+    if (item.selected) {
+      // Ensure numberOfPeople is set before toggling selection
+      const newNumberOfPeople = item.selected ? numberOfPeople : 0;
+      dispatch(toggleMealSelection(index, newNumberOfPeople));
+    }
+    else {
+      dispatch(toggleMealSelection(index));
+    }
 
   };
-
   const getItemsFromTotalCost = () => {
     const items = [];
+    venueItems.forEach((item) => {
+      if (item.quantity > 0) {
+        items.push({ ...item, type: "venue" });
+      }
+    });
+    avItems.forEach((item) => {
+      if (
+        item.quantity > 0 &&
+        !items.some((i) => i.name === item.name && i.type === "av")
+      ) {
+        items.push({ ...item, type: "av" });
+      }
+    });
+    mealsItems.forEach((item) => {
+      if (item.selected) {
+        const itemForDisplay = { ...item, type: "meals" };
+        if (item.numberOfPeople) {
+          itemForDisplay.numberOfPeople = numberOfPeople;
+        }
+        items.push(itemForDisplay);
+      }
+    });
+    return items;
   };
 
   const items = getItemsFromTotalCost();
 
-  const ItemsDisplay = ({ items }) => {
+  const   ItemsDisplay = ({ items }) => {
+
+    console.log(items);
+
+    return <>
+    <div className="display_box1">
+      {items.length === 0 && <p>No items selected.</p>}
+      <table className="table_item_data">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Unit Cost</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+          {items.map((item,index)=>(
+            <tr key={index}>
+              <td>{item.name}</td>
+              <td>{item.cost}</td>
+              <td>{item.type==="meals" || item.numberOfPeople ? `For ${numberOfPeople} people`:item.quantity}</td>
+              <td>{item.type==="meals" || item.numberOfPeople ? `${item.cost*numberOfPeople}`:`${item.cost*item.quantity}`}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      </div></>
 
   };
   const calculateTotalCost = (section) => {
@@ -62,20 +121,23 @@ const mealsItems= useSelector((state)=>{state.meals})
       venueItems.forEach((item) => {
         totalCost += item.cost * item.quantity;
       });
-    }
-    else if(section==="av"){
-      avItems.forEach((item)=>{totalCost+=item.cost*item.quantity});
-    }
-
-    else if(section==="meal"){
-      mealsItems.forEach((item)=>{totalCost+=item.cost*item.quantity})
+    } else if (section === "av") {
+      avItems.forEach((item) => {
+        totalCost += item.cost * item.quantity;
+      });
+    } else if (section === "meals") {
+      mealsItems.forEach((item) => {
+        if (item.selected) {
+          totalCost += item.cost * numberOfPeople;
+        }
+      });
     }
     return totalCost;
   };
   const venueTotalCost = calculateTotalCost("venue");
   //THE SECTION VALUE VENUE IS USED TO REFER TO name: "venue", WE DECLARED IN THE CREATESLICE IN VENUESLICE.JS FILE
   const avTotalCost = calculateTotalCost("av");
-  const mealTotalCost = calculateTotalCost("meal");
+  const mealTotalCost = calculateTotalCost("meals");
 
   const navigateToProducts = (idType) => {
     if (idType == '#venue' || idType == '#addons' || idType == '#meals') {
@@ -83,6 +145,12 @@ const mealsItems= useSelector((state)=>{state.meals})
         setShowItems(!showItems); // Toggle showItems to true only if it's currently false
       }
     }
+  }
+
+  const totalCosts ={
+    venue: venueTotalCost,
+    av: avTotalCost,
+    meals: mealTotalCost,
   }
 
   return (
@@ -168,7 +236,7 @@ const mealsItems= useSelector((state)=>{state.meals})
 
               {/*Necessary Add-ons*/}
               <div id="addons" className="venue_container container_main">
-               
+
 
                 <div className="text">
 
@@ -176,24 +244,24 @@ const mealsItems= useSelector((state)=>{state.meals})
 
                 </div>
                 <div className="addons_selection">
-                {avItems.map((item,index)=>(
-                  <div className="av_data venue_main" key={index}>
-                    <div className="img">
-                      <img src={item.img} alt={item.name}/>
-                  </div>
-                  <div className="text">
-                    {item.name}
-                  </div>
-                  <div>
-                    ${item.cost}
-                  </div>
-                  <div className="addons_btn">
-                    <button className="btn-warning" onClick={()=>handleDecrementAvQuantity(index)}> &ndash; </button>
-                    <span className="quantity-value">{item.quantity}</span>
-                    <button className="btn-warning" onClick={()=>handleIncrementAvQuantity(index)}> &#43; </button>
-                  </div>
-                  </div>
-                ))}
+                  {avItems.map((item, index) => (
+                    <div className="av_data venue_main" key={index}>
+                      <div className="img">
+                        <img src={item.img} alt={item.name} />
+                      </div>
+                      <div className="text">
+                        {item.name}
+                      </div>
+                      <div>
+                        ${item.cost}
+                      </div>
+                      <div className="addons_btn">
+                        <button className="btn-warning" onClick={() => handleDecrementAvQuantity(index)}> &ndash; </button>
+                        <span className="quantity-value">{item.quantity}</span>
+                        <button className="btn-warning" onClick={() => handleIncrementAvQuantity(index)}> &#43; </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
                 <div className="total_cost">Total Cost: ${avTotalCost}</div>
 
@@ -210,20 +278,21 @@ const mealsItems= useSelector((state)=>{state.meals})
 
                 <div className="input-container venue_selection">
                   <label htmlFor="numberOfPeople"><h3>Number of People: </h3></label>
-                  <input type="number" value={numberOfPeople} min="1" className="input_box5" id="numberOfPeople" onChange={(e)=>{setNumberOfPeople(parseInt(e.target.value))}}/>
+                  <input type="number" value={numberOfPeople} min="1" className="input_box5" id="numberOfPeople" onChange={(e) => { setNumberOfPeople(parseInt(e.target.value)) }} />
 
                 </div>
                 <div className="meal_selection">
-                  {mealsItems.map((item,index)=>(
-        <div className="meal_item" key={index} style={{ padding: 15 }}>
-          <div className="inner">
-            <input type="checkbox" id={`meal_${index}`} checked={item.selected} onChange={()=>handleMealSelection(index)}/></div>
-          <label  htmlFor={`meal_${index}`}>{item.name}</label>
-      {/* upar wali line htmlFor ki value string hai. So string value generate krnay k liay hum ne backtiks ka use kia or ham unk backtiks ya kehlo string main hum ne aik js expresion include krni thi us k liay hum ne $ ka istemal ki us expression k sath. Agar ye string value na hoti to humain $ use na krna part  or esay hi hum {} use krletay directly  */}
-          
-      <div className="meal_cost">${item.cost}</div>
-
-          </div>
+                  {mealsItems.map((item, index) => (
+                    <div className="meal_item" key={index} style={{ padding: 15 }}>
+                      <div className="inner">
+                        <input type="checkbox" id={`meal_${index}`}
+                          checked={item.selected}
+                          onChange={() => handleMealSelection(index)}
+                        />
+                        <label htmlFor={`meal_${index}`}> {item.name} </label>
+                      </div>
+                      <div className="meal_cost">${item.cost}</div>
+                    </div>
                   ))}
                 </div>
                 <div className="total_cost">Total Cost: ${mealTotalCost}</div>

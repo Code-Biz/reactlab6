@@ -61,7 +61,5 @@ export const avSlice= createSlice({
 })
 
 
-
-export const { incrementAvQuantity, decrementAvQuantity } = avSlice.actions;
-
+export const {decrementAvQuantity, incrementAvQuantity} = avSlice.actions;
 export default avSlice.reducer;
